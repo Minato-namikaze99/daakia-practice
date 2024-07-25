@@ -1,0 +1,15 @@
+{
+    "dialect": "mysql",
+    "host": "localhost",
+    "port": 3306,
+    "additional": {
+      "timestamps": false
+    },
+    "skipTables": [],
+    "caseProp": "l",
+    "caseFile": "p",
+    "singularize": false,
+    "caseModel": "p",
+    "lang": "js"
+  }
+  
