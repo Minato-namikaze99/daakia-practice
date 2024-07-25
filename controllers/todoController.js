@@ -29,7 +29,7 @@ module.exports = {
 
     try {
       const [results, metadata] = await sqlize.query('SELECT COUNT(*) AS count FROM user WHERE CONCAT(country_code, phone_number) = ?', {
-        replacements: ['${userDetails.country_code}${userDetails.phone_number}'],
+        replacements: [`${userDetails.country_code+userDetails.phone_number}`],
         type: sqlize.QueryTypes.SELECT,
       });
       console.log(results);

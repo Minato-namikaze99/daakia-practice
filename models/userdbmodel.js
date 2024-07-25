@@ -1,8 +1,8 @@
 const { Model, DataTypes } = require("sequelize");
 const { sqlize } = require("../config/dbconfig");
 
-exports.User = sqlize.define(
-  "User",
+exports.Users = sqlize.define(
+  "Users",
   { //the table constraints and all
     country_code: { type: DataTypes.STRING, unique: false, allowNull: false, },
     phone_number: { type: DataTypes.STRING, unique: true, allowNull: false, },
