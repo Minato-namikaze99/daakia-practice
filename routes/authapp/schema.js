@@ -11,7 +11,6 @@ exports.loginUser = Joi.object({ //Joi schema for login
         .min(8)
         .max(12)
         .required(),
-    name: Joi.string().max(100).required(),
 });
 
 exports.registerUser = Joi.object({ //joi schema for register
