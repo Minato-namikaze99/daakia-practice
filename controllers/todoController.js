@@ -6,6 +6,9 @@ const { sqlize } = require("../config/dbconfig");
 const { generateAccessToken } = require("../middleware/jwtAuth");
 //this import is for JOI validation
 
+const crypto = require('crypto');
+//for password storing, for hashing and all
+
 const models = initModels(sqlize);
 
 module.exports = {
@@ -13,7 +16,7 @@ module.exports = {
     const userDetails = req.body;
 
     const user = await models.User.findOne({ //gets the id of the user with the same country_code and phone_number
-      attribute: ['id'],
+      attribute: ['id', 'salt', 'hash'],
       where: {
         country_code: userDetails.country_code,
         phone_number: userDetails.phone_number,
@@ -25,6 +28,12 @@ module.exports = {
         .status(403)
         .json({ message: "User with these credentials does not exist" });
     }
+    const newHash = crypto.pbkdf2Sync(userDetails.password, user.salt, 10000, 16, 'sha512').toString('hex');
+
+    if (newHash !== user.hash)
+      return res
+        .status(403)
+        .json({ message: "Wrong password!" });
 
     const accessUser = {
       id: user.id,
@@ -50,6 +59,13 @@ module.exports = {
         if (user) {
           return res.status(409).json({ message: "User already exists!" });
         } else {
+
+          const _salt = crypto.randomBytes(8).toString('hex');
+          const _hash = crypto.pbkdf2Sync(userDetails.password, _salt, 10000, 16, 'sha512').toString('hex');
+
+          console.log(_salt);
+          console.log(_hash);
+
           models.User.create({
             country_code: userDetails.country_code,
             phone_number: userDetails.phone_number,
@@ -57,6 +73,8 @@ module.exports = {
             address: userDetails.address,
             dob: userDetails.dob,
             gender: userDetails.gender,
+            salt: _salt,
+            hash: _hash,
           })
             .then(() => {
               return res.status(201).json({ message: "New user created!" });
@@ -125,30 +143,29 @@ module.exports = {
       const currentUser = req.user;
 
       models.Todo.findOne({ where: { id: todoID, user_id: currentUser.id } })
-      .then((data) => {
-        if(data === null)
-        {
-          return res.status(403).json({message: "Access forbidden!"});
-        }
-
-        models.Todo.update(
-          { status: true },
-          {
-            where: {
-              id: todoID,
-            },
+        .then((data) => {
+          if (data === null) {
+            return res.status(403).json({ message: "Access forbidden!" });
           }
-        )
-        .then(()=>{
-          return res.status(201).json({message: "Todo updated!"});
+
+          models.Todo.update(
+            { status: true },
+            {
+              where: {
+                id: todoID,
+              },
+            }
+          )
+            .then(() => {
+              return res.status(201).json({ message: "Todo updated!" });
+            })
+            .catch((error) => {
+              console.log(error);
+            })
         })
         .catch((error) => {
           console.log(error);
         })
-      })
-      .catch((error) => {
-        console.log(error);
-      })
 
     } catch (error) {
       res.status(500).json({ message: "Some error occured!", error });
@@ -159,21 +176,21 @@ module.exports = {
       const todoID = req.params.todoId;
       const currentUser = req.user;
 
-      models.Todo.findOne({where: {id: todoID, user_id: currentUser.id}})
-      .then((data) => {
-        if(data === null)
-          return res.status(403).json({message: "Access forbidden!"});
-        
-        models.Todo.destroy({
-          where: {
-            id: todoID,
-          },
-        });
-        return res.status(200).json({ message: "Todo deleted!" });
-      })
-      .catch((error) => {
-        console.log(error);
-      })
+      models.Todo.findOne({ where: { id: todoID, user_id: currentUser.id } })
+        .then((data) => {
+          if (data === null)
+            return res.status(403).json({ message: "Access forbidden!" });
+
+          models.Todo.destroy({
+            where: {
+              id: todoID,
+            },
+          });
+          return res.status(200).json({ message: "Todo deleted!" });
+        })
+        .catch((error) => {
+          console.log(error);
+        })
     } catch (error) {
       res.status(500).json({ message: "Some error occured!", error });
     }

@@ -30,7 +30,15 @@ module.exports = function(sequelize, DataTypes) {
     gender: {
       type: DataTypes.STRING(50),
       allowNull: true
-    }
+    },
+    salt: {
+      type: DataTypes.STRING(200),
+      allowNull: false,
+    },
+    hash: {
+      type: DataTypes.STRING(200),
+      allowNull: false,
+    },
   }, {
     sequelize,
     tableName: 'user',
